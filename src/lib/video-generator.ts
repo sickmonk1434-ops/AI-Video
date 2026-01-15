@@ -6,7 +6,13 @@ import { uploadToCloudinary } from './cloudinary';
 import { db } from './db';
 
 // Configure FFmpeg path
-if (ffmpegPath) {
+// Prioritize system FFmpeg (critical for Alpine Linux / Docker)
+const systemFfmpeg = '/usr/bin/ffmpeg';
+if (fs.existsSync(systemFfmpeg)) {
+    console.log('Using System FFmpeg at', systemFfmpeg);
+    ffmpeg.setFfmpegPath(systemFfmpeg);
+} else if (ffmpegPath) {
+    console.log('Using ffmpeg-static at', ffmpegPath);
     ffmpeg.setFfmpegPath(ffmpegPath);
 }
 
