@@ -81,12 +81,12 @@ export default function WatchPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="space-y-6"
                     >
-                        <div className="flex items-center justify-center space-x-2 text-green-400 mb-4">
-                            <CheckCircle2 className="h-6 w-6" />
-                            <span className="text-lg font-medium">Video Ready!</span>
+                        <div className="flex items-center justify-center space-x-2 text-primary font-bold mb-4 tracking-wider">
+                            <CheckCircle2 className="h-6 w-6 text-primary" />
+                            <span className="text-lg text-neon">RENDER COMPLETE</span>
                         </div>
 
-                        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-primary/50 bg-black shadow-[0_0_50px_rgba(57,255,20,0.3)]">
                             <video
                                 src={videoUrl}
                                 controls
@@ -98,7 +98,7 @@ export default function WatchPage() {
                         <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
                             <Button
                                 size="lg"
-                                className="bg-white text-black hover:bg-gray-200"
+                                className="bg-primary text-black font-bold h-12 px-8 hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(57,255,20,0.5)] transition-all"
                                 onClick={() => window.open(videoUrl, '_blank')}
                             >
                                 <Download className="mr-2 h-4 w-4" /> Download Video
@@ -106,6 +106,7 @@ export default function WatchPage() {
                             <Button
                                 variant="outline"
                                 size="lg"
+                                className="border-white/10 text-white hover:bg-white/10 h-12 px-8"
                                 onClick={() => {
                                     navigator.clipboard.writeText(window.location.href);
                                     alert("Link copied to clipboard!");
@@ -115,6 +116,7 @@ export default function WatchPage() {
                             </Button>
                             <Button
                                 variant="ghost"
+                                className="text-gray-400 hover:text-white"
                                 onClick={() => router.push('/')}
                             >
                                 Create Another
@@ -132,7 +134,7 @@ export default function WatchPage() {
                         <Button onClick={() => router.push('/')}>Try Again</Button>
                     </motion.div>
                 )}
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

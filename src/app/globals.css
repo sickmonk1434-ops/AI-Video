@@ -1,38 +1,64 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
+    --background: 0 0% 0%;
+    /* Pure Black */
+    --foreground: 0 0% 100%;
+
+    --card: 240 10% 4%;
+    /* Dark Grey */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 240 10% 4%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 120 100% 50%;
+    /* Neon Green */
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 9%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+
+    --accent: 120 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 120 100% 50%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer utilities {
+  .text-neon {
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.7), 0 0 20px rgba(57, 255, 20, 0.5);
+  }
+
+  .border-neon {
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+  }
+
+  .bg-neon-glow {
+    background: radial-gradient(circle at center, rgba(57, 255, 20, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 

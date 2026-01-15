@@ -80,36 +80,25 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="rounded-2xl border border-white/10 bg-black/40 p-1 backdrop-blur-xl shadow-2xl"
+          className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition hover:border-primary/50"
         >
-          <div className="rounded-xl bg-card p-6 space-y-4">
+          <div className="space-y-4">
             <Textarea
-              placeholder="e.g. A futuristic city where plants glow at night, and a lone gardener discovers a secret underground forest..."
-              className="min-h-[160px] resize-none bg-secondary/50 text-lg border-none focus-visible:ring-purple-500/50"
+              placeholder="Describe your video concept..."
+              className="min-h-[120px] resize-none border-white/10 bg-black/50 text-lg text-white placeholder:text-gray-500 focus:border-primary focus:ring-primary/50"
               value={concept}
               onChange={(e) => setConcept(e.target.value)}
               disabled={loading}
             />
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                Powered by Gemini 1.5
-              </span>
-              <Button
-                size="lg"
-                onClick={handleGenerate}
-                loading={loading}
-                disabled={!concept.trim()}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/20 transition-all hover:scale-105"
-              >
-                {!loading && <Wand2 className="mr-2 h-4 w-4" />}
-                Generate Script
-              </Button>
-            </div>
-            {error && (
-              <p className="text-sm text-red-400 flex items-center mt-2">
-                ⚠️ {error}
-              </p>
-            )}
+            <Button
+              size="lg"
+              onClick={handleGenerate}
+              disabled={loading || !concept.trim()}
+              className="h-14 w-full bg-primary text-black text-lg font-bold hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(57,255,20,0.5)] transition-all"
+            >
+              {loading ? "Generating..." : "Generate Video"}
+            </Button>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
         </motion.div>
 

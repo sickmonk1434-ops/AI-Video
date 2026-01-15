@@ -1,4 +1,7 @@
+
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -8,25 +11,47 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: "Missing Render ID" }, { status: 400 });
     }
 
-    const SHOTSTACK_API_KEY = process.env.SHOTSTACK_API_KEY;
-    const SHOTSTACK_ENV = process.env.SHOTSTACK_ENV || "sandbox";
-    const SHOTSTACK_URL = `https://api.shotstack.io/${SHOTSTACK_ENV}/render/${id}`;
-
     try {
-        const res = await fetch(SHOTSTACK_URL, {
-            headers: {
-                "x-api-key": SHOTSTACK_API_KEY || "",
-            },
+        // Query DB for status
+        const { db } = await import("@/lib/db");
+        const result = await db.execute({
+            sql: "SELECT status, video_url FROM projects WHERE id = ?",
+            args: [id]
         });
 
-        if (!res.ok) {
-            throw new Error("Failed to fetch status from Shotstack");
+        if (result.rows.length === 0) {
+            return NextResponse.json({ error: "Project not found" }, { status: 404 });
         }
 
-        const data = await res.json();
-        return NextResponse.json(data);
+        const project = result.rows[0];
 
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        // If status is 'done', return the Cloudinary URL (or valid video_url)
+        if (project.status === "done" && project.video_url) {
+            return NextResponse.json({
+                response: {
+                    status: "done",
+                    url: project.video_url
+                }
+            });
+        }
+
+        if (project.status === "failed") {
+            return NextResponse.json({
+                response: {
+                    status: "failed"
+                }
+            });
+        }
+
+        // Default to processing
+        return NextResponse.json({
+            response: {
+                status: "rendering"
+            }
+        });
+
+    } catch (e) {
+        console.error("Status Check Error:", e);
+        return NextResponse.json({ error: "Status check failed" }, { status: 500 });
     }
 }

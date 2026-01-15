@@ -15,11 +15,12 @@ export async function POST(req: Request) {
             );
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
         const prompt = `
       You are a professional video scriptwriter. 
-      Create a compelling, short video script (approx 30-60 seconds) based on this concept: "${concept}".
+      Create a compelling video script (approx 60-90 seconds) based on this concept: "${concept}".
+      The script must have at least 5-7 distinct scenes.
       
       Return ONLY valid JSON with this structure:
       {
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
         "scenes": [
           {
             "segment_id": 1,
-            "visual_description": "Detailed image generation prompt for Stable Diffusion (photorealistic, 8k, etc). Describe the subject, lighting, style.",
+            "visual_description": "A highly detailed, cinematic, photorealistic image description using visual keywords (e.g., '4k', 'dramatic lighting', 'sharp focus', 'mid-shot'). Describe the subject, action, lighting, and mood precisely. Avoid text references.",
             "voiceover": "The exact spoken words for this scene."
           }
         ]
