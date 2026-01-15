@@ -1,33 +1,25 @@
+// @ts-ignore
+import { MsEdgeTTS, OUTPUT_FORMAT } from "ms-edge-tts";
+import path from "path";
+import fs from "fs";
+import os from "os";
+import { v4 as uuidv4 } from "uuid";
 
-export async function generateVoiceover(text: string): Promise<ArrayBuffer> {
-    const API_KEY = process.env.ELEVENLABS_API_KEY;
-    const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel - Default pre-made voice
+export async function generateVoiceover(text: string): Promise<Buffer> {
+  const tempFile = path.join(os.tmpdir(), `${uuidv4()}.mp3`);
+  const tts = new MsEdgeTTS();
 
-    if (!API_KEY) throw new Error("Missing ElevenLabs API Key");
+  // Using Christopher (Male) or Aria (Female) - "ChristopherNeural" is great for narration
+  await tts.setMetadata("en-US-ChristopherNeural", OUTPUT_FORMAT.MP3_128K);
 
-    const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "xi-api-key": API_KEY,
-            },
-            body: JSON.stringify({
-                text,
-                model_id: "eleven_multilingual_v2",
-                voice_settings: {
-                    stability: 0.5,
-                    similarity_boost: 0.75,
-                },
-            }),
-        }
-    );
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`ElevenLabs API Error: ${errorText}`);
-    }
-
-    return response.arrayBuffer();
+  try {
+    await tts.toFile(tempFile, text);
+    const buffer = fs.readFileSync(tempFile);
+    fs.unlinkSync(tempFile);
+    return buffer;
+  } catch (error) {
+    // Cleanup if error occurs after file creation
+    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+    throw error;
+  }
 }
