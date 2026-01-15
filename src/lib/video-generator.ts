@@ -69,7 +69,9 @@ export async function assembleVideo(renderId: string, scenes: Scene[]): Promise<
                 '-map [outv]',
                 '-map [outa]',
                 '-c:v libx264',
-                '-preset ultrafast', // Use max CPU speed
+                '-preset ultrafast', // Max encoding speed
+                '-tune zerolatency', // Optimize for immediate encoding
+                '-crf 28',           // Slightly lower quality, much faster
                 '-threads 0',        // Use all available CPU cores
                 '-pix_fmt yuv420p',
                 '-c:a aac',
