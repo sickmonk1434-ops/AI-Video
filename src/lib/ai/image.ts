@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export async function generateImage(prompt: string): Promise<ArrayBuffer> {
+export async function generateImage(prompt: string): Promise<Buffer> {
     const API_KEY = process.env.GEMINI_API_KEY;
 
     if (!API_KEY) {
@@ -56,12 +56,13 @@ export async function generateImage(prompt: string): Promise<ArrayBuffer> {
     }
 }
 
-async function fallbackImage(prompt: string): Promise<ArrayBuffer> {
+async function fallbackImage(prompt: string): Promise<Buffer> {
     console.log("Using Pollinations.ai fallback...");
     const enhancedPrompt = `cinematic shot, photorealistic, 4k, hyper detailed, ${prompt}`;
     const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1280&height=720&model=flux`;
 
     const res = await fetch(fallbackUrl);
     if (!res.ok) throw new Error("Fallback image generation failed.");
-    return res.arrayBuffer();
+    const arrayBuffer = await res.arrayBuffer();
+    return Buffer.from(arrayBuffer);
 }
