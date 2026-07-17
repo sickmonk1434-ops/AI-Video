@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Film, PlayCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, PlayCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 
@@ -11,6 +11,8 @@ interface Scene {
     segment_id: number;
     visual_description: string;
     voiceover: string;
+    voiceSource?: 'ovi' | 'external'; // New
+    bg_music?: string; // New
 }
 
 interface Script {
@@ -153,25 +155,50 @@ export default function ReviewPage() {
                             </span>
 
                             <div className="grid gap-6 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                                        Visual Prompt (For AI Image Gen)
-                                    </label>
-                                    <Textarea
-                                        value={scene.visual_description}
-                                        onChange={(e) => handleUpdateScene(idx, "visual_description", e.target.value)}
-                                        className="min-h-[120px] bg-secondary/30"
-                                    />
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                                            Visual Prompt (Ovi Video)
+                                        </label>
+                                        <Textarea
+                                            value={scene.visual_description}
+                                            onChange={(e) => handleUpdateScene(idx, "visual_description", e.target.value)}
+                                            className="min-h-[120px] bg-secondary/30"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                                            Background Music (Ovi AUDCAP)
+                                        </label>
+                                        <Textarea
+                                            placeholder="e.g. dramatic orchestral, futuristic lo-fi..."
+                                            value={scene.bg_music || ""}
+                                            onChange={(e) => handleUpdateScene(idx, "bg_music", e.target.value)}
+                                            className="min-h-[60px] bg-secondary/30 text-sm"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                        Voiceover (For AI TTS)
-                                    </label>
-                                    <Textarea
-                                        value={scene.voiceover}
-                                        onChange={(e) => handleUpdateScene(idx, "voiceover", e.target.value)}
-                                        className="min-h-[120px] bg-secondary/30"
-                                    />
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                                Voiceover Script
+                                            </label>
+                                            <select
+                                                value={scene.voiceSource || 'ovi'}
+                                                onChange={(e) => handleUpdateScene(idx, "voiceSource", e.target.value)}
+                                                className="bg-black text-[10px] border border-white/20 rounded px-2 py-1 text-primary outline-none focus:border-primary"
+                                            >
+                                                <option value="ovi">Ovi Native Voice</option>
+                                                <option value="external">External TTS</option>
+                                            </select>
+                                        </div>
+                                        <Textarea
+                                            value={scene.voiceover}
+                                            onChange={(e) => handleUpdateScene(idx, "voiceover", e.target.value)}
+                                            className="min-h-[120px] bg-secondary/30"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>

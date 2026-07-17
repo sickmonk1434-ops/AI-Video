@@ -1,29 +1,37 @@
+import { tts } from 'edge-tts';
 import { getAllAudioUrls } from 'google-tts-api';
 
 export async function generateVoiceover(text: string): Promise<Buffer> {
+  const cleanText = text ? text.replace(/<[^>]*>/g, "").trim() : "Audio segment";
+
   try {
-    // Google TTS (Free via Translate API)
-    // Note: Quality is "robotic" compared to Edge/ElevenLabs, but it is reliable on servers.
-    const results = getAllAudioUrls(text, {
-      lang: 'en',
-      slow: false,
-      host: 'https://translate.google.com',
-      splitPunct: ',.?!', // Split on punctuation
+    console.log("Generating Voiceover via Edge TTS...");
+    const buffer = await tts(cleanText || "Audio segment", {
+      voice: "en-US-ChristopherNeural",
     });
+    return Buffer.from(buffer);
+  } catch (err: any) {
+    console.warn("Edge TTS failed, falling back to Google TTS...", err?.message);
+    try {
+      const results = getAllAudioUrls(cleanText || "Audio segment", {
+        lang: 'en',
+        slow: false,
+        host: 'https://translate.google.com',
+        splitPunct: ',.?!',
+      });
 
-    // Download all segments
-    const buffers = await Promise.all(
-      results.map(async (item) => {
-        const res = await fetch(item.url);
-        if (!res.ok) throw new Error(`Google TTS fetch failed: ${res.statusText}`);
-        return res.arrayBuffer();
-      })
-    );
+      const buffers = await Promise.all(
+        results.map(async (item) => {
+          const res = await fetch(item.url);
+          if (!res.ok) throw new Error(`Google TTS fetch failed`);
+          return res.arrayBuffer();
+        })
+      );
 
-    // Merge into one buffer
-    return Buffer.concat(buffers.map(b => Buffer.from(b)));
-  } catch (error) {
-    console.error("Google TTS Error:", error);
-    throw error;
+      return Buffer.concat(buffers.map(b => Buffer.from(b)));
+    } catch (fallbackErr) {
+      console.error("All TTS generators failed:", fallbackErr);
+      throw fallbackErr;
+    }
   }
 }

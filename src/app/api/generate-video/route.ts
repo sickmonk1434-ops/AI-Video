@@ -4,6 +4,7 @@ import { generateImage } from "@/lib/ai/image";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { db, initDB } from "@/lib/db";
 import { v4 as uuidv4 } from 'uuid';
+import { generateComfyOviVideo } from "@/lib/ai/comfy-ovi";
 
 export async function POST(req: Request) {
     try {
@@ -18,28 +19,54 @@ export async function POST(req: Request) {
         // const scenesToProcess = scenes.slice(0, 3);
         const scenesToProcess = scenes;
 
-        // 1. Generate Assets for all scenes (SEQUENTIAL to avoid Rate Limits)
+        // 1. Generate Assets for all scenes
         const assets = [];
+        const isOffline = process.env.OFFLINE_MODE === "true";
+
         for (const scene of scenesToProcess) {
-            // Generate Voice and Image for this scene
-            // We can do voice and image in parallel for a SINGLE scene (2 requests), 
-            // but we shouldn't do multiple scenes at once.
-            const [audioBuffer, imageBuffer] = await Promise.all([
-                generateVoiceover(scene.voiceover),
-                generateImage(scene.visual_description),
-            ]);
+            if (isOffline) {
+                console.log(`Generating Ovi Video for scene: ${scene.visual_description}`);
 
-            // Upload to Cloudinary
-            const [audioUrl, imageUrl] = await Promise.all([
-                uploadToCloudinary(audioBuffer, "video-ai/audio", "video"),
-                uploadToCloudinary(imageBuffer, "video-ai/images", "image")
-            ]);
+                // Only try to generate image if we have a key, otherwise let Ovi T2V handle it
+                let imageBuffer = undefined;
+                if (process.env.GEMINI_API_KEY) {
+                    try {
+                        imageBuffer = await generateImage(scene.visual_description);
+                    } catch {
+                        console.warn("Offline image gen failed, falling back to Ovi T2V");
+                    }
+                }
 
-            assets.push({
-                ...scene,
-                audioUrl,
-                imageUrl,
-            });
+                // Generate Ovi Video (This handles both video and audio)
+                const videoUrl = await generateComfyOviVideo({
+                    prompt: scene.voiceover,
+                    voiceSource: scene.voiceSource || 'ovi', // Default to Ovi native voice
+                    bgMusic: scene.bg_music,
+                    imageBuffer: imageBuffer
+                });
+
+                assets.push({
+                    ...scene,
+                    videoUrl, // Pre-rendered video clip
+                });
+            } else {
+                // Original Cloud-based logic
+                const [audioBuffer, imageBuffer] = await Promise.all([
+                    generateVoiceover(scene.voiceover),
+                    generateImage(scene.visual_description),
+                ]);
+
+                const [audioUrl, imageUrl] = await Promise.all([
+                    uploadToCloudinary(audioBuffer, "video-ai/audio", "video"),
+                    uploadToCloudinary(imageBuffer, "video-ai/images", "image")
+                ]);
+
+                assets.push({
+                    ...scene,
+                    audioUrl,
+                    imageUrl,
+                });
+            }
         }
 
         // 2. Prepare for Local FFmpeg
@@ -47,6 +74,7 @@ export async function POST(req: Request) {
         const ffmpegScenes = assets.map(asset => ({
             imageUrl: asset.imageUrl,
             audioUrl: asset.audioUrl,
+            videoUrl: asset.videoUrl, // New: Pre-rendered video
             duration: SCENE_DURATION
         }));
 
@@ -81,11 +109,12 @@ export async function POST(req: Request) {
             message: "Video rendering started locally"
         });
 
-    } catch (error: any) {
-        console.error("Generate Video Error Detailed:", error);
-        console.error("Stack:", error.stack);
+    } catch (error: unknown) {
+        const err = error as Error;
+        console.error("Generate Video Error Detailed:", err);
+        console.error("Stack:", err?.stack);
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            { error: err?.message || "Internal Server Error" },
             { status: 500 }
         );
     }

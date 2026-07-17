@@ -1,68 +1,62 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 export async function generateImage(prompt: string): Promise<Buffer> {
     const API_KEY = process.env.GEMINI_API_KEY;
 
-    if (!API_KEY) {
-        console.warn("Missing Gemini API Key for Image Gen. Falling back.");
-        return fallbackImage(prompt);
-    }
+    // Try Gemini REST API with short timeout
+    if (API_KEY) {
+        try {
+            console.log("Generating Image via Gemini REST API...");
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    try {
-        // Use the new simplified generic client or the specialized one if preferred.
-        // For Imagen 3, we often use the standard generative model interface if available,
-        // or the specific image model.
-        // Note: The @google/genai SDK might have specific image methods differently than text.
-        // Assuming standard interface for now or using the REST pattern if SDK differs slightly.
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${API_KEY}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        instances: [{ prompt: prompt.slice(0, 300) }],
+                        parameters: { sampleCount: 1, aspectRatio: "16:9" }
+                    }),
+                    signal: controller.signal
+                }
+            );
+            clearTimeout(timeoutId);
 
-        // REVISION: For Imagen 3 specifically, it's often safer to use the REST API directly 
-        // until the SDK types are fully stabilized for image bytes in all environments.
-
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${API_KEY}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    instances: [{ prompt: prompt }],
-                    parameters: {
-                        sampleCount: 1,
-                        aspectRatio: "16:9"
-                    }
-                }),
+            if (response.ok) {
+                const data = await response.json();
+                if (data.predictions?.[0]?.bytesBase64Encoded) {
+                    return Buffer.from(data.predictions[0].bytesBase64Encoded, 'base64');
+                }
             }
-        );
-
-        if (!response.ok) {
-            const err = await response.text();
-            throw new Error(`Gemini Image API Error: ${err}`);
+        } catch (err: any) {
+            console.warn("Gemini Image API failed or timed out, trying Pollinations.ai fallback...", err?.message);
         }
-
-        const data = await response.json();
-
-        // Imagen 3 response structure: { predictions: [ { bytesBase64Encoded: "..." } ] }
-        if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
-            const base64 = data.predictions[0].bytesBase64Encoded;
-            return Buffer.from(base64, 'base64');
-        } else {
-            throw new Error("Invalid Imagen 3 response structure");
-        }
-
-    } catch (error) {
-        console.error("Gemini Image Gen Failed:", error);
-        return fallbackImage(prompt);
     }
-}
 
-async function fallbackImage(prompt: string): Promise<Buffer> {
-    console.log("Using Pollinations.ai fallback...");
-    const enhancedPrompt = `cinematic shot, photorealistic, 4k, hyper detailed, ${prompt}`;
-    const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1280&height=720&model=flux`;
+    // Try Pollinations.ai with 12s timeout
+    try {
+        console.log("Using Pollinations.ai fallback...");
+        const cleanPrompt = prompt ? prompt.replace(/[^a-zA-Z0-9 ]/g, "").slice(0, 150) : "cinematic view";
+        const enhancedPrompt = `cinematic shot, photorealistic, 4k, ${cleanPrompt}`;
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1280&height=720&model=flux`;
 
-    const res = await fetch(fallbackUrl);
-    if (!res.ok) throw new Error("Fallback image generation failed.");
-    const arrayBuffer = await res.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const res = await fetch(fallbackUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+            const arrayBuffer = await res.arrayBuffer();
+            return Buffer.from(arrayBuffer);
+        }
+    } catch (fallbackErr: any) {
+        console.warn("Pollinations.ai fallback failed or timed out, returning ultimate placeholder image buffer...", fallbackErr?.message);
+    }
+
+    // Ultimate 100% Reliable Fallback: DummyImage Fast CDN Buffer
+    console.log("Using Fast CDN DummyImage buffer...");
+    const ultimateRes = await fetch("https://dummyimage.com/1280x720/0f172a/38bdf8.png&text=AI+Visual+Scene");
+    const ultimateBuffer = await ultimateRes.arrayBuffer();
+    return Buffer.from(ultimateBuffer);
 }
