@@ -14,8 +14,11 @@
 /coverage
 
 # next.js
-/.next/
+.next/
 /out/
+
+# local subdirectory
+/video-creator/
 
 # production
 /build
