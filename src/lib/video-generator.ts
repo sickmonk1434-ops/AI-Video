@@ -35,7 +35,16 @@ interface Scene {
 
 // Helper: Process a single scene into a video segment
 // running in parallel maximizes CPU usage
-async function renderScene(scene: Scene, index: number, renderId: string, outputDir: string): Promise<string> {
+// Helper: Process a single scene into a video segment
+// running in parallel maximizes CPU usage
+async function renderScene(
+    scene: Scene, 
+    index: number, 
+    renderId: string, 
+    outputDir: string,
+    width: number = 1280,
+    height: number = 720
+): Promise<string> {
     const segmentPath = path.join(outputDir, `${renderId}_seg_${index}.mp4`);
 
     // If we already have a video clip, just copy/transcode it to the segment path
@@ -50,7 +59,7 @@ async function renderScene(scene: Scene, index: number, renderId: string, output
                     '-preset ultrafast',
                     '-pix_fmt yuv420p',
                     '-c:a aac',
-                    '-vf scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1'
+                    `-vf scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1`
                 ])
                 .output(segmentPath)
                 .on('error', (err) => reject(new Error(`Scene ${index} (video) failed: ${err.message}`)))
@@ -60,12 +69,20 @@ async function renderScene(scene: Scene, index: number, renderId: string, output
     }
 
     return new Promise((resolve, reject) => {
+        const imgInput = scene.imageUrl!.startsWith('http')
+            ? scene.imageUrl!
+            : path.join(process.cwd(), 'public', scene.imageUrl!);
+
+        const audioInput = scene.audioUrl!.startsWith('http')
+            ? scene.audioUrl!
+            : path.join(process.cwd(), 'public', scene.audioUrl!);
+
         ffmpeg()
-            .input(scene.imageUrl!)
+            .input(imgInput)
             .inputOptions(['-loop 1', `-t ${scene.duration}`])
-            .input(scene.audioUrl!)
+            .input(audioInput)
             .complexFilter([
-                `[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1[v]`,
+                `[0:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1[v]`,
                 // Ensure audio matches video duration exactly to prevent sync drift
                 `[1:a]apad[a]`
             ])
@@ -87,7 +104,12 @@ async function renderScene(scene: Scene, index: number, renderId: string, output
     });
 }
 
-export async function assembleVideo(renderId: string, scenes: Scene[]): Promise<string> {
+export async function assembleVideo(
+    renderId: string, 
+    scenes: Scene[],
+    width: number = 1280,
+    height: number = 720
+): Promise<string> {
     const outputDir = path.join(process.cwd(), 'public', 'videos');
     if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
@@ -102,7 +124,7 @@ export async function assembleVideo(renderId: string, scenes: Scene[]): Promise<
 
         // 1. Render all scenes in parallel
         segmentPaths = await Promise.all(
-            scenes.map((scene, idx) => renderScene(scene, idx, renderId, outputDir))
+            scenes.map((scene, idx) => renderScene(scene, idx, renderId, outputDir, width, height))
         );
 
         console.log(`All segments rendered. Stitching...`);
