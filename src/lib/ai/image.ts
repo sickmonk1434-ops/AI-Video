@@ -33,16 +33,16 @@ export async function generateImage(prompt: string): Promise<Buffer> {
         }
     }
 
-    // Try Pollinations.ai with 12s timeout
+    // Try Pollinations.ai with 15s timeout
     try {
         console.log("Using Pollinations.ai fallback...");
         const cleanPrompt = prompt ? prompt.replace(/[^a-zA-Z0-9 ]/g, "").slice(0, 800) : "cinematic view";
         const hasStyle = prompt.toLowerCase().includes("style") || prompt.toLowerCase().includes("art") || prompt.toLowerCase().includes("illustration");
         const enhancedPrompt = hasStyle ? cleanPrompt : `cinematic shot, photorealistic, 4k, ${cleanPrompt}`;
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1280&height=720&model=flux`;
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1280&height=720&nologo=true`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         const res = await fetch(fallbackUrl, { signal: controller.signal });
         clearTimeout(timeoutId);

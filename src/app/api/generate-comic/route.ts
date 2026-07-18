@@ -58,10 +58,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Failed to parse comic script from Gemini", raw: text }, { status: 500 });
         }
 
-        // 2. Generate illustrations for each panel
+        // 2. Generate illustrations for each panel in parallel
         const isOffline = process.env.OFFLINE_MODE === "true";
         const comicId = uuidv4();
-        const outputPanels = [];
 
         // Ensure local output folder exists if offline
         if (isOffline) {
@@ -71,8 +70,7 @@ export async function POST(req: Request) {
             }
         }
 
-        for (const panel of comicScript.panels) {
-            // Build the image prompt using style & consistency directives
+        const panelPromises = comicScript.panels.map(async (panel: any) => {
             const stylePrompt = `${styleName} style illustration, vibrant coloring, clear comic panel art, ${comicScript.style_directives}. Scene: ${panel.visual_description}`;
 
             console.log(`Generating image for panel ${panel.panel_id}: ${stylePrompt.slice(0, 80)}...`);
@@ -89,11 +87,13 @@ export async function POST(req: Request) {
                 imageUrl = await uploadToCloudinary(imageBuffer, "comics", "image");
             }
 
-            outputPanels.push({
+            return {
                 ...panel,
                 imageUrl,
-            });
-        }
+            };
+        });
+
+        const outputPanels = await Promise.all(panelPromises);
 
         return NextResponse.json({
             success: true,
