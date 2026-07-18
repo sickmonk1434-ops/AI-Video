@@ -86,7 +86,7 @@ export default function WatchPage() {
                             <span className="text-lg text-neon">RENDER COMPLETE</span>
                         </div>
 
-                        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-primary/50 bg-black shadow-[0_0_50px_rgba(57,255,20,0.3)]">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-primary/50 bg-black shadow-[0_0_50px_rgba(168,85,247,0.3)]">
                             <video
                                 src={videoUrl}
                                 controls
@@ -98,7 +98,7 @@ export default function WatchPage() {
                         <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
                             <Button
                                 size="lg"
-                                className="bg-primary text-black font-bold h-12 px-8 hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(57,255,20,0.5)] transition-all"
+                                className="bg-primary text-white font-bold h-12 px-8 hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all"
                                 onClick={() => window.open(videoUrl, '_blank')}
                             >
                                 <Download className="mr-2 h-4 w-4" /> Download Video

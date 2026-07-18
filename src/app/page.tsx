@@ -94,7 +94,7 @@ export default function Home() {
               size="lg"
               onClick={handleGenerate}
               disabled={loading || !concept.trim()}
-              className="h-14 w-full bg-primary text-black text-lg font-bold hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(57,255,20,0.5)] transition-all"
+              className="h-14 w-full bg-primary text-white text-lg font-bold hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all"
             >
               {loading ? "Generating..." : "Generate Video"}
             </Button>

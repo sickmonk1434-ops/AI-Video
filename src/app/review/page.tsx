@@ -50,7 +50,7 @@ const LoadingOverlay = () => (
 
                 {/* Progress Bar */}
                 <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
-                    <div className="h-full w-1/2 animate-[shimmer_2s_infinite] rounded-full bg-primary shadow-[0_0_10px_rgba(57,255,20,0.5)]" />
+                    <div className="h-full w-1/2 animate-[shimmer_2s_infinite] rounded-full bg-primary shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
                 </div>
             </div>
         </div>
@@ -124,7 +124,7 @@ export default function ReviewPage() {
                         <Button
                             onClick={handleConfirm}
                             disabled={isGenerating}
-                            className="bg-black border border-primary text-purple-400 font-bold shadow-[0_0_10px_rgba(57,255,20,0.2)] hover:bg-primary/10 hover:shadow-[0_0_20px_rgba(57,255,20,0.5)] transition-all"
+                            className="bg-black border border-primary text-purple-400 font-bold shadow-[0_0_10px_rgba(168,85,247,0.2)] hover:bg-primary/10 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all"
                         >
                             {isGenerating ? "Processing..." : "Generate Video"}
                         </Button>
@@ -211,7 +211,7 @@ export default function ReviewPage() {
                         size="lg"
                         onClick={handleConfirm}
                         disabled={isGenerating}
-                        className="w-full bg-black border-2 border-primary text-purple-400 font-bold shadow-[0_0_15px_rgba(57,255,20,0.3)] hover:bg-primary/10 hover:shadow-[0_0_25px_rgba(57,255,20,0.6)] transition-all"
+                        className="w-full bg-black border-2 border-primary text-purple-400 font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:bg-primary/10 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] transition-all"
                     >
                         <PlayCircle className="mr-2 h-5 w-5" />
                         {isGenerating ? "PROCESSING..." : "CONFIRM & GENERATE"}
@@ -225,7 +225,7 @@ export default function ReviewPage() {
                         size="lg"
                         onClick={handleConfirm}
                         disabled={isGenerating}
-                        className="bg-black border-2 border-primary text-purple-400 font-black tracking-wider shadow-[0_0_15px_rgba(57,255,20,0.3)] hover:bg-primary/10 hover:shadow-[0_0_25px_rgba(57,255,20,0.6)] hover:text-purple-300 transition-all duration-300"
+                        className="bg-black border-2 border-primary text-purple-400 font-black tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:bg-primary/10 hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:text-purple-300 transition-all duration-300"
                     >
                         <PlayCircle className="mr-2 h-5 w-5" />
                         {isGenerating ? "PROCESSING..." : "CONFIRM & GENERATE"}
