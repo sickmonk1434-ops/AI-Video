@@ -13,19 +13,19 @@ export default function Header() {
 
   return (
     <>
-      <header className="header glass-panel">
-        <div className="container header-content">
-          <Link href="/" className="logo">
-            Video<span className="text-secondary">Creator</span>
+      <header className="sticky top-0 left-0 right-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur-md transition-all duration-300">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <Link href="/" className="text-xl font-bold tracking-tight text-white transition-all hover:opacity-90">
+            Video<span className="text-purple-500 font-extrabold">Creator</span>
           </Link>
-          <nav className="nav">
-            <a href="#features" onClick={handleClick} className="nav-link">Features</a>
-            <a href="#pricing" onClick={handleClick} className="nav-link">Pricing</a>
-            <a href="#about" onClick={handleClick} className="nav-link">About</a>
+          <nav className="hidden md:flex items-center gap-8">
+            <a href="#features" onClick={handleClick} className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">Features</a>
+            <a href="#pricing" onClick={handleClick} className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">Pricing</a>
+            <a href="#about" onClick={handleClick} className="text-sm font-medium text-zinc-400 transition-colors hover:text-white">About</a>
           </nav>
-          <div className="cta-group">
-            <a href="/login" onClick={handleClick} className="btn-text">Sign In</a>
-            <a href="/signup" onClick={handleClick} className="btn btn-primary">Get Started</a>
+          <div className="flex items-center gap-6">
+            <a href="/login" onClick={handleClick} className="text-sm font-semibold text-zinc-400 transition-colors hover:text-white">Sign In</a>
+            <a href="/signup" onClick={handleClick} className="rounded-full bg-white px-5 py-2 text-sm font-bold text-black shadow-md shadow-white/5 transition-all hover:bg-zinc-200 hover:scale-105 active:scale-95 duration-200">Get Started</a>
           </div>
         </div>
       </header>

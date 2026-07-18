@@ -12,28 +12,30 @@ export default function Footer() {
 
     return (
         <>
-            <footer className="footer">
-                <div className="container footer-content">
-                    <div className="footer-col">
-                        <div className="logo">VideoCreator</div>
-                        <p className="footer-desc">
+            <footer className="border-t border-white/10 bg-[#030303] py-12 px-6">
+                <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 pb-8">
+                    <div className="flex flex-col gap-4">
+                        <div className="text-xl font-bold tracking-tight text-white">
+                            Video<span className="text-purple-500 font-extrabold">Creator</span>
+                        </div>
+                        <p className="text-sm text-zinc-500 max-w-xs leading-relaxed">
                             Empowering creators with AI-driven video tools.
                         </p>
                     </div>
-                    <div className="footer-links">
-                        <div className="col">
-                            <h4>Product</h4>
-                            <a href="#" onClick={handleClick}>Features</a>
-                            <a href="#" onClick={handleClick}>Pricing</a>
+                    <div className="grid grid-cols-2 gap-8 md:col-span-2">
+                        <div className="flex flex-col gap-3">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Product</h4>
+                            <a href="#" onClick={handleClick} className="text-sm text-zinc-500 hover:text-white transition-colors">Features</a>
+                            <a href="#" onClick={handleClick} className="text-sm text-zinc-500 hover:text-white transition-colors">Pricing</a>
                         </div>
-                        <div className="col">
-                            <h4>Company</h4>
-                            <a href="#" onClick={handleClick}>About</a>
-                            <a href="#" onClick={handleClick}>Blog</a>
+                        <div className="flex flex-col gap-3">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Company</h4>
+                            <a href="#" onClick={handleClick} className="text-sm text-zinc-500 hover:text-white transition-colors">About</a>
+                            <a href="#" onClick={handleClick} className="text-sm text-zinc-500 hover:text-white transition-colors">Blog</a>
                         </div>
                     </div>
                 </div>
-                <div className="container footer-bottom">
+                <div className="mx-auto max-w-7xl border-t border-white/5 pt-8 flex flex-col md:flex-row md:justify-between items-center text-xs text-zinc-600 gap-4">
                     <p>&copy; {new Date().getFullYear()} VideoCreator. All rights reserved.</p>
                 </div>
             </footer>
