@@ -1,12 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-import { generateImage } from "@/lib/ai/image";
-import { uploadToCloudinary } from "@/lib/cloudinary";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
-import fs from "fs";
 
-// Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
@@ -14,16 +8,13 @@ export async function POST(req: Request) {
         const { prompt: conceptPrompt, panelCount, style } = await req.json();
 
         if (!conceptPrompt) {
-            return NextResponse.json(
-                { error: "Comic prompt description is required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Comic prompt description is required" }, { status: 400 });
         }
 
         const count = panelCount ? parseInt(panelCount) : 4;
         const styleName = style || "Comic Book Art";
 
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
         const promptText = `
       You are a professional comic strip writer and illustrator.
@@ -58,58 +49,24 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Failed to parse comic script from Gemini", raw: text }, { status: 500 });
         }
 
-        // 2. Generate illustrations sequentially to avoid rate limits on fallback APIs
-        const isOffline = process.env.OFFLINE_MODE === "true";
-        const comicId = uuidv4();
-
-        // Ensure local output folder exists if offline
-        if (isOffline) {
-            const localComicsDir = path.join(process.cwd(), "public", "comics");
-            if (!fs.existsSync(localComicsDir)) {
-                fs.mkdirSync(localComicsDir, { recursive: true });
-            }
-        }
-
-        const outputPanels = [];
-        for (let i = 0; i < comicScript.panels.length; i++) {
-            const panel = comicScript.panels[i];
-
-            // Small delay between panels so burst API calls don't get rate-limited
-            if (i > 0) await new Promise(r => setTimeout(r, 2000));
-
-            const stylePrompt = `${styleName} style illustration, vibrant coloring, clear comic panel art, ${comicScript.style_directives}. Scene: ${panel.visual_description}`;
-            console.log(`[Panel ${panel.panel_id}/${comicScript.panels.length}] Generating: ${stylePrompt.slice(0, 80)}...`);
-
-            const imageBuffer = await generateImage(stylePrompt);
-
-            let imageUrl = "";
-            if (isOffline) {
-                const fileName = `comic_${comicId}_panel_${panel.panel_id}.png`;
-                const filePath = path.join(process.cwd(), "public", "comics", fileName);
-                fs.writeFileSync(filePath, imageBuffer);
-                imageUrl = `/comics/${fileName}`;
-            } else {
-                imageUrl = await uploadToCloudinary(imageBuffer, "comics", "image");
-            }
-
-            outputPanels.push({ ...panel, imageUrl });
-            console.log(`[Panel ${panel.panel_id}] ✓ Done — URL: ${imageUrl.slice(0, 60)}`);
-        }
-
+        // Return script WITHOUT images — the client will call /api/generate-panel-image for each panel
         return NextResponse.json({
             success: true,
-            comicId,
             title: comicScript.title,
             description: comicScript.description,
             style: styleName,
-            panels: outputPanels,
+            styleDirectives: comicScript.style_directives,
+            panels: comicScript.panels.map((p: any) => ({
+                panel_id: p.panel_id,
+                visual_description: p.visual_description,
+                dialogue: p.dialogue,
+                speaker: p.speaker,
+                imageUrl: "", // filled in by client
+            })),
         });
 
     } catch (error: any) {
         console.error("Generate Comic API Error:", error);
-        return NextResponse.json(
-            { error: error?.message || "Internal Server Error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: error?.message || "Internal Server Error" }, { status: 500 });
     }
 }
