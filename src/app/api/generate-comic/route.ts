@@ -58,7 +58,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Failed to parse comic script from Gemini", raw: text }, { status: 500 });
         }
 
-        // 2. Generate illustrations for each panel in parallel
+        // 2. Generate illustrations sequentially to avoid rate limits on fallback APIs
         const isOffline = process.env.OFFLINE_MODE === "true";
         const comicId = uuidv4();
 
@@ -70,14 +70,15 @@ export async function POST(req: Request) {
             }
         }
 
-        const panelPromises = comicScript.panels.map(async (panel: any, index: number) => {
-            // Stagger the starts of each panel generation by 1.5s
-            // This prevents hitting strict concurrent rate limits on Gemini and protects Pollinations from concurrent bursts.
-            await new Promise(resolve => setTimeout(resolve, index * 1500));
+        const outputPanels = [];
+        for (let i = 0; i < comicScript.panels.length; i++) {
+            const panel = comicScript.panels[i];
+
+            // Small delay between panels so burst API calls don't get rate-limited
+            if (i > 0) await new Promise(r => setTimeout(r, 2000));
 
             const stylePrompt = `${styleName} style illustration, vibrant coloring, clear comic panel art, ${comicScript.style_directives}. Scene: ${panel.visual_description}`;
-
-            console.log(`Generating image for panel ${panel.panel_id} (Staggered delay: ${index * 1.5}s): ${stylePrompt.slice(0, 80)}...`);
+            console.log(`[Panel ${panel.panel_id}/${comicScript.panels.length}] Generating: ${stylePrompt.slice(0, 80)}...`);
 
             const imageBuffer = await generateImage(stylePrompt);
 
@@ -91,13 +92,9 @@ export async function POST(req: Request) {
                 imageUrl = await uploadToCloudinary(imageBuffer, "comics", "image");
             }
 
-            return {
-                ...panel,
-                imageUrl,
-            };
-        });
-
-        const outputPanels = await Promise.all(panelPromises);
+            outputPanels.push({ ...panel, imageUrl });
+            console.log(`[Panel ${panel.panel_id}] ✓ Done — URL: ${imageUrl.slice(0, 60)}`);
+        }
 
         return NextResponse.json({
             success: true,
