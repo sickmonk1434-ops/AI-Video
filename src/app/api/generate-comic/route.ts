@@ -70,10 +70,14 @@ export async function POST(req: Request) {
             }
         }
 
-        const panelPromises = comicScript.panels.map(async (panel: any) => {
+        const panelPromises = comicScript.panels.map(async (panel: any, index: number) => {
+            // Stagger the starts of each panel generation by 1.5s
+            // This prevents hitting strict concurrent rate limits on Gemini and protects Pollinations from concurrent bursts.
+            await new Promise(resolve => setTimeout(resolve, index * 1500));
+
             const stylePrompt = `${styleName} style illustration, vibrant coloring, clear comic panel art, ${comicScript.style_directives}. Scene: ${panel.visual_description}`;
 
-            console.log(`Generating image for panel ${panel.panel_id}: ${stylePrompt.slice(0, 80)}...`);
+            console.log(`Generating image for panel ${panel.panel_id} (Staggered delay: ${index * 1.5}s): ${stylePrompt.slice(0, 80)}...`);
 
             const imageBuffer = await generateImage(stylePrompt);
 
