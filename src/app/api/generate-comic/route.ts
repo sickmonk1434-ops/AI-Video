@@ -3,6 +3,13 @@ import { NextResponse } from "next/server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
+// Fallback chain: try each model in order until one succeeds
+const GEMINI_MODELS = [
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-2.0-flash",
+];
+
 export async function POST(req: Request) {
     try {
         const { prompt: conceptPrompt, panelCount, style } = await req.json();
@@ -14,7 +21,11 @@ export async function POST(req: Request) {
         const count = panelCount ? parseInt(panelCount) : 4;
         const styleName = style || "Comic Book Art";
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+        // Try each model until one succeeds (avoids quota exhaustion on a single model)
+        let comicScript: any = null;
+        let lastError: any = null;
+
+        for (const modelName of GEMINI_MODELS) {
 
         const promptText = `
       You are a professional comic strip writer and illustrator.
@@ -37,16 +48,22 @@ export async function POST(req: Request) {
       Do not include markdown formatting like \`\`\`json. Just the raw JSON.
     `;
 
-        const result = await model.generateContent(promptText);
-        const response = await result.response;
-        const text = response.text().replace(/```json|```/g, "").trim();
+            try {
+                console.log(`[generate-comic] Trying model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(promptText);
+                const text = result.response.text().replace(/```json|```/g, "").trim();
+                comicScript = JSON.parse(text);
+                console.log(`[generate-comic] ✓ Success with ${modelName}`);
+                break; // success — stop trying
+            } catch (err: any) {
+                lastError = err;
+                console.warn(`[generate-comic] ${modelName} failed:`, err?.message?.slice(0, 120));
+            }
+        }
 
-        let comicScript;
-        try {
-            comicScript = JSON.parse(text);
-        } catch (e) {
-            console.error("JSON Parse Error:", text);
-            return NextResponse.json({ error: "Failed to parse comic script from Gemini", raw: text }, { status: 500 });
+        if (!comicScript) {
+            return NextResponse.json({ error: lastError?.message || "All Gemini models failed" }, { status: 500 });
         }
 
         // Return script WITHOUT images — the client will call /api/generate-panel-image for each panel

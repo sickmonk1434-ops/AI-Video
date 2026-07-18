@@ -1,23 +1,24 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-// Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
+// Fallback chain: try each model in order until one succeeds
+const GEMINI_MODELS = [
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-2.0-flash",
+];
 
 export async function POST(req: Request) {
     try {
         const { concept } = await req.json();
 
         if (!concept) {
-            return NextResponse.json(
-                { error: "Concept is required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Concept is required" }, { status: 400 });
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
-
-        const prompt = `
+        const promptText = `
       You are a professional video scriptwriter. 
       Create a compelling video script (approx 60-90 seconds) based on this concept: "${concept}".
       The script must have at least 5-7 distinct scenes.
@@ -37,23 +38,35 @@ export async function POST(req: Request) {
       Do not include markdown formatting like \`\`\`json. Just the raw JSON.
     `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text().replace(/```json|```/g, "").trim();
+        let script: any = null;
+        let lastError: any = null;
 
-        try {
-            const script = JSON.parse(text);
-            return NextResponse.json({ script });
-        } catch (e) {
-            console.error("JSON Parse Error:", text);
-            return NextResponse.json({ error: "Failed to parse script", raw: text }, { status: 500 });
+        for (const modelName of GEMINI_MODELS) {
+            try {
+                console.log(`[generate-script] Trying model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(promptText);
+                const text = result.response.text().replace(/```json|```/g, "").trim();
+                script = JSON.parse(text);
+                console.log(`[generate-script] ✓ Success with ${modelName}`);
+                break;
+            } catch (err: any) {
+                lastError = err;
+                console.warn(`[generate-script] ${modelName} failed:`, err?.message?.slice(0, 120));
+            }
         }
 
-    } catch (error) {
+        if (!script) {
+            return NextResponse.json(
+                { error: lastError?.message || "All Gemini models failed to generate script" },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json({ script });
+
+    } catch (error: any) {
         console.error("API Error:", error);
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: error?.message || "Internal Server Error" }, { status: 500 });
     }
 }
